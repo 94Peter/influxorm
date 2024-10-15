@@ -19,6 +19,7 @@ type Config struct {
 	Token       string `yaml:"token,omitempty"`
 	Bucket      string `yaml:"bucket,omitempty"`
 	TelegrafUrl string `yaml:"telegraf_url,omitempty"`
+	Timeout     uint   `yaml:"timeout,omitempty"`
 }
 
 func (c *Config) NewClient() (influxdb2.Client, error) {
@@ -28,7 +29,12 @@ func (c *Config) NewClient() (influxdb2.Client, error) {
 	if c.Token == "" {
 		return nil, errors.New("missing token")
 	}
-	return influxdb2.NewClient(c.Url, c.Token), nil
+	if c.Timeout == 0 {
+		c.Timeout = 60
+	}
+	return influxdb2.NewClientWithOptions(c.Url, c.Token,
+		influxdb2.DefaultOptions().SetHTTPRequestTimeout(c.Timeout),
+	), nil
 }
 
 func (c *Config) GetBucket() string {
