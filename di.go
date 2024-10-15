@@ -33,7 +33,7 @@ func (c *Config) NewClient() (influxdb2.Client, error) {
 		return nil, errors.New("missing token")
 	}
 	if c.Timeout == 0 {
-		c.Timeout = 60
+		c.Timeout = 300
 	}
 	return influxdb2.NewClientWithOptions(c.Url, c.Token,
 		influxdb2.DefaultOptions().SetHTTPRequestTimeout(c.Timeout),
