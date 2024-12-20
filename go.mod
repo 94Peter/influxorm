@@ -2,7 +2,10 @@ module github.com/94peter/influxorm
 
 go 1.21.7
 
-require github.com/influxdata/influxdb-client-go/v2 v2.13.0
+require (
+	github.com/influxdata/influxdb-client-go/v2 v2.13.0
+	gopkg.in/yaml.v2 v2.4.0
+)
 
 require (
 	github.com/apapsch/go-jsonmerge/v2 v2.0.0 // indirect

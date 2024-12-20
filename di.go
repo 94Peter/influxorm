@@ -1,7 +1,9 @@
 package influxorm
 
 import (
+	"context"
 	"errors"
+	"os"
 
 	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
 )
@@ -11,6 +13,7 @@ type DI interface {
 	GetOrg() string
 	GetBucket() string
 	NewTelegrafWriter() (TelegrafWriter, error)
+	Init(context.Context) error
 }
 
 type Config struct {
@@ -30,7 +33,7 @@ func (c *Config) NewClient() (influxdb2.Client, error) {
 		return nil, errors.New("missing token")
 	}
 	if c.Timeout == 0 {
-		c.Timeout = 60
+		c.Timeout = 300
 	}
 	return influxdb2.NewClientWithOptions(c.Url, c.Token,
 		influxdb2.DefaultOptions().SetHTTPRequestTimeout(c.Timeout),
@@ -50,4 +53,26 @@ func (c *Config) NewTelegrafWriter() (TelegrafWriter, error) {
 		return nil, errors.New("missing telegraf_url")
 	}
 	return NewTelegraf(c.TelegrafUrl), nil
+}
+
+const ENV_INFLUXDB_INIT_FILE = "INFLUXDB_INIT_FILE"
+
+func (c *Config) Init(ctx context.Context) error {
+	initFile := os.Getenv(ENV_INFLUXDB_INIT_FILE)
+
+	if initFile == "" {
+		return errors.New("missing env INFLUXDB_INIT_FILE")
+	}
+	initConf, err := loadInitConfig(initFile)
+	if err != nil {
+		return err
+	}
+
+	clt, err := c.NewClient()
+	if err != nil {
+		return err
+	}
+	defer clt.Close()
+
+	return initConf.Init(ctx, clt, c.Org)
 }
